@@ -1,16 +1,16 @@
 class Apple {
-    constuctor(el) {
+    constructor(el) {
         this.node = document.createElement('div');
         this.node.setAttribute('id', 'apple');
-       
-        //el is the #board element when we invoke Apple in main.js
+    
+        // 'el' is the #board elem.
         el.appendChild(this.node);
-
-        //randomize the position of the apple node.
+    
+        // Randomize the position of the apple node.
         const randomX = Math.floor(Math.random() * 14) * 50;
         const randomY = Math.floor(Math.random() * 14) * 50;
-
+    
         this.node.style.left = randomX;
-        this.node.style.right = randomY;
-    }
+        this.node.style.top = randomY;
+      }
 }
