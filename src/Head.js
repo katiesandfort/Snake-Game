@@ -1,6 +1,6 @@
 class Head {
     constructor(el) {
-        this.board = document.querySelector('#board');
+        this.board = el; //board on the DOM
 
         //create the head on the board
         this.node = document.createElement('div');
@@ -8,40 +8,39 @@ class Head {
         el.appendChild(this.node);
 
         //set direction to null as default so snake doesn't start moving until key press
-        this.currentDirection = null;
-        this.SPEED = 250;
+        this.currentDirection = 'null';
+        this.SPEED = 250; //set time interval in milliseconds
+
 
         //set starting position of head to top-left corner of the board
-        this.node.style.top = 0;
-        this.node.style.left = 0;
+        this.node.style.top = '0px';
+        this.node.style.left = '0px';
 
-        // Keep track of the # of body segments and save the instances of Body in an array.
-        this.size = 0;
-        this.bodies = [];
+        // track the previous positions of the head 
+        this.headPosition = [];
 
-        // Keep records of the coordinates that the head node has travelled to. 
-        this.headPositions = [];
+        //maintain all the non-head body parts
+        this.bodyParts = [];
 
         // Trigger the first invocation of move().
         // Remember to bind 'this' to move(), so that move() can point to (via 'this') the instance of Head that called it.
         // Otherwise, 'this' in move() will be the Windows object.
         setTimeout(this.move.bind(this), this.SPEED);
     }
-    /* This method moves the head and body segments and simultaneously 
-  checks for out-of-bounds and collision with the apple. */
+
+
   move() {
-    // The move method is recursively called.
-    // setTimeout's ID is saved in a constant so clearTimeout can later access and clear it.
+    //continue to loop the game
     const moveTimeoutID = setTimeout(this.move.bind(this), this.SPEED);
 
     const head = this.node;
     const direction = this.currentDirection;
     
-    // Retrieve the top & left coordinates of the head node as integers (not strings).
+    // determine the top and left psoitions of the head
     let topPosition = Number(head.style.top.replace('px', ''))
     let leftPosition = Number(head.style.left.replace('px', ''))
 
-    // Move the head node by reassigning its coordinates with new values
+    // change direction as user provides input
     switch (direction) {
       case 'right':
         head.style.left = `${leftPosition += 50}px`;
@@ -57,104 +56,110 @@ class Head {
         break;
     }
 
+    //end game if head moves out of bounds
+    if (this.headIsOutBounds(topPosition, leftPosition)){
+      return this.endGame(timeoutID);
+    }
+
+    if (this.appleIsEaten(topPosition, leftPosition)) {
+      //clear current apple
+      this.removeApple();
+      //generate a new apple
+      this.generateApple();
+      //generate a new body piece
+      this.generateNewBody();
+      //increase the speed
+      this.SPEED -= 10;
+    }
+
+    //enqueue head positions to the headPositions array, and ensure it's only one element longer than the bodyParts array
+    this.trackHeadPositions(topPosition, leftPosition);
+
+    //if any body pieces exist, move them to the next position
+    if (this.bodyParts.length > 0) {
+      this.moveBody(timeoutID);
+    }
+  }
+
+  headIsOutBounds(topPosition, leftPosition) {
+    return topPosition >= 700 || topPosition < 0 || leftPosition >= 700 || leftPosition < 0;
+  }
+
+  appleIsEaten(topPosition, leftPosition) {
+    const apple = document.querySelector('#apple').style;
+
+    return (`${topPosition}px` === apple.top && `${leftPosition}px` === apple.left)
+  }
+
+  removeApple() {
     const apple = document.querySelector('#apple');
-    const applePos = {
-      // Store X and Y coordinates as numeric values.
-      top: Number(apple.style.top.replace('px', '')),
-      left: Number(apple.style.left.replace('px', '')),
-    };
-    
-    // Check whether head collides with apple.
-    if (topPosition === applePos.top && leftPosition === applePos.left) {      
-      apple.remove();
 
-      let newApple = new Apple(this.board);
-
-      // Check if new apple lands on the head.
-      // Could use do-while loop to continously generate new apple until it doesn't land on the head.
-      while (newApple.node.style.top === `${topPosition}px` && newApple.node.style.left === `${leftPosition}px`) {
-        newApple.node.remove();
-        newApple = new Apple(this.board);
-      }
-
-      // Generate new body segment.
-      const body = new Body(this.board);
-      this.bodies.push(body);
-      this.size += 1;
-    }
-    
-    // Record head positions but keep the array just 1 el longer than this.bodies.
-    this.headPositions.unshift({top: topPosition, left: leftPosition});
-    if (this.headPositions.length > this.size + 1) {
-      this.headPositions.pop();
-    }
-
-    // Periodically move bodies if segments exist.
-    if (this.size > 0) this.moveBodies(moveTimeoutID);
-
-    // Check whether the head node is out-of-bounds at any interval.
-    if (leftPosition >= 700 || topPosition >= 700 || leftPosition < 0 || topPosition < 0) {
-      const userInput = confirm('Game Over! \nClick OK to restart game.');
-
-      if (userInput) this.resetGame(moveTimeoutID);
-      else clearTimeout(moveTimeoutID);
-    }
-
-    /********** End of move() method *****************/
-  }
-  moveBodies(timeoutID) {
-    const head = this.node;
-
-    // Assign each body segment's position with head's position records.
-    // * See Comment 1 at bottom for reason for using for-loop instead of .forEach.
-    for (let i = 0; i < this.bodies.length; i += 1) {
-      const body = this.bodies[i];
-
-      body.node.style.top = this.headPositions[i + 1].top;
-      body.node.style.left = this.headPositions[i + 1].left;
-
-      // Check if the head collides with any body segment.
-      // * See Comment 2 at bottom for the reason for including i!==0/1/2 in the conditional.
-      if (body.node.style.top === head.style.top && body.node.style.left === head.style.left
-        && i !== 0 && i !== 1 && i !== 2) {
-        const userInput = confirm('Game Over! \nClick OK to restart game.');
-
-        if (userInput) {
-          this.resetGame(timeoutID);
-        } else {
-          clearTimeout(timeoutID);
-          return;
-        }
-      }
-    }  
+    apple.remove();
   }
 
-  resetGame(timeoutID) {
+  generateApple(){
+    let newApple;
+    let appleLocationIsInvalid = true;
+
+    while (appleLocationIsInvalid) {
+      if(newApple) {
+        this.removeApple();
+      }
+      new Apple(this.board);
+      newApple = document.querySelector('#apple');
+
+      appleLocationisInvalid = this.headPosition.some((top, left) => {
+        return (`${top}px` === newApple.style.top && `${left}px` === newApple.style.left)
+      });
+    }
+  }
+  
+  generateNewBody(){
+    const newBody = new Body(this.board);
+    this.bodyParts.push(newBody);
+  }
+
+  trackHeadPositions(topPosition, leftPosition) {
+    //add current head position to the front of headPositions
+    this.headPosition.unshift({top: topPosition, left: leftPosition});
+
+    if(this.headPosition.length > this.bodyParts.length + 1) this.headPosition.pop()
+  }
+
+  moveBody(timeoutID){
+    //get current head position to determine where to move the body parts
+    const {top: headTop, left: headLeft} = this.headPosition[0];
+
+    for (let i = 0; i < this.bodyParts.length; i++) {
+      const currentBody = this.bodyParts[i].node.style;
+
+      if(`${headTop}px` === currentBody.top && `${headLeft}px` === currentBody.left){
+        return this.endGame(timeoutID);
+      }
+
+      const {top: newTop, left: newLeft} = this.headPosition[i + 1];
+      currentBody.top = `${newTop}px`;
+      currentBody.left = `${newLeft}px`;
+
+
+    }
+  }
+
+  endGame(timeoutID) {
     clearTimeout(timeoutID);
 
-    // Re-display the game start modal.
-    const modal = document.getElementById('game-start-modal');
-    modal.style.display = 'flex';
-    
-    // Remove old apple and body segments.
-    const oldApple = document.getElementById('apple');
-    oldApple.remove();
-    const oldBodySegments = document.querySelectorAll('.body');
-    oldBodySegments.forEach(oldBodySegment => oldBodySegment.remove());
+    confirm('Do you want to play again?');
 
-    // Reset these values to defaut and re-position head.
-    this.currentDirection = null;
+    document.querySelectorAll('.body').forEach(node => node.remove());
+
+    this.currentDirection = 'null';
     this.SPEED = 250;
-    this.node.style.top = 0;
-    this.node.style.left = 0
-    this.size = 0;
-    this.bodies = [];
-    this.headPositions = [];
-
-    // Generate a new apple.
-    new Apple(this.board);
-    
-    // Kickstart head's movements again.
+    this.node.style.top = '0px';
+    this.node.style.left = '0px';
+    this.headPosition = [];
+    this.bodyParts = [];
+    this.removeApple();
+    this.generateApple();
     this.move();
   }
 }
