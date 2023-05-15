@@ -121,6 +121,11 @@ class Head {
     const scoreBoard = document.getElementById('score');
     scoreBoard.innerText = `Score = ${this.score}`;
   }
+  resetScore(){
+    this.score = 0;
+    const scoreBoard = document.getElementById('score');
+    scoreBoard.innerText = `Score = ${this.score}`;
+  }
 
   trackHeadPositions(topPosition, leftPosition){
     //add the current head position to the front of headPositions
@@ -160,6 +165,7 @@ class Head {
     this.bodyParts = [];
     this.removeApple();
     this.generateApple();
+    this.resetScore();
     this.move();
   }
 }
