@@ -1,16 +1,16 @@
 class Apple {
-    constructor(el) {
-        this.node = document.createElement('div');
-        this.node.setAttribute('id', 'apple');
-    
-        // 'el' is the #board elem.
-        el.appendChild(this.node);
-    
-        // Randomize the position of the apple node.
-        const randomX = Math.floor(Math.random() * 14) * 50;
-        const randomY = Math.floor(Math.random() * 14) * 50;
-    
-        this.node.style.left = randomX;
-        this.node.style.top = randomY;
-      }
-}
+  constructor(el) {
+    this.node = document.createElement('img');
+    this.node.setAttribute('id', 'apple');
+    this.node.setAttribute('src', 'src/assets/apple1.jpg');
+
+    el.appendChild(this.node);
+
+    //randomize the location of the apple
+    const top = Math.ceil(Math.random() * 13) * 50;
+    const left = Math.ceil(Math.random() * 13) * 50;
+
+  this.node.style.top = `${top}px`;
+  this.node.style.left = `${left}px`;
+  }  
+};
