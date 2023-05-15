@@ -7,7 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
     //create new head and apple element
     const head = new Head(board);
     new Apple(board);
-  
+
+    const scoreDiv = document.createElement('div');
+    scoreDiv.setAttribute('id', 'score');
+    scoreDiv.innerText = `Score = 0`
+    body.appendChild(scoreDiv);
 
   
   body.addEventListener('keydown', (e) => {

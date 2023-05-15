@@ -5,6 +5,9 @@ class Head {
     this.node.setAttribute('id', 'head');
     el.appendChild(this.node);
 
+    this.score = 0;
+    
+
     //initialze current direction as null to prevent movement until user provides direction
     this.currentDirection = 'null';
     this.SPEED = 250; // time interval in milliseconds
@@ -56,6 +59,8 @@ class Head {
     }
     
     if(this.appleIsEaten(topPosition, leftPosition)){
+      //increment score
+      this.incrementScore();
       //clear current apple
       this.removeApple();
       //generate a new apple
@@ -110,6 +115,11 @@ class Head {
   generateNewBody(){
     const newBody = new Body(this.board);
     this.bodyParts.push(newBody);
+  }
+  incrementScore(){
+    this.score++;
+    const scoreBoard = document.getElementById('score');
+    scoreBoard.innerText = `Score = ${this.score}`;
   }
 
   trackHeadPositions(topPosition, leftPosition){
